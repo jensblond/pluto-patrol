@@ -23,10 +23,9 @@
         var nextFire = 0;
         var bounds;
         var dummy;
-        var boundsLeft;
-        var boundsRight;
         var groundCollision;
         var sky;
+        var fireKey;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -39,9 +38,14 @@
             game.load.image('bullet', 'img/bullet.png');
             // game.load.image('pittfall', 'img/pittfall.png');
             game.load.image('sky', 'img/sky.png');
-            // game.load.image('mountain', 'img/mountain.png');
-            game.load.image('shit', 'img/shit.png');
+            game.load.image('mountain', 'img/mountain.png');
+            game.load.image('hills', 'img/hills.png');
+            game.load.image('shit', 'img/shit3.png');
             game.load.image('ground', 'img/ground.png');
+
+            game.load.audio('explosion_tank', 'sounds/explosion0.wav');
+            game.load.audio('explosion_shit', 'sounds/explosion1.wav');
+            game.load.audio('laser_tank', 'sounds/laser.wav');
         }
 
         function render() {
@@ -59,17 +63,25 @@
             game.world.setBounds(0, 0, 20000, game.height);
 
             sky = game.add.tileSprite(0, 0, game.stage.bounds.width, 600, 'sky');
+            mountain = game.add.tileSprite(0, 250, game.stage.bounds.width, game.cache.getImage('mountain').height, 'mountain');
+            hills = game.add.tileSprite(0, 300, game.stage.bounds.width, game.cache.getImage('hills').height, 'hills');
             ground = game.add.tileSprite(0, game.height - 64, game.stage.bounds.width, game.cache.getImage('ground').height, 'ground');
 
-            tank = game.add.sprite(10, ground.y - (ground.height + 100), 'tank', 0);
+            tank = game.add.sprite(10, ground.y - (ground.height), 'tank', 0);
             tank.animations.add('drive');
             
             game.physics.arcade.enable(ground);
             ground.body.immovable = true;
             ground.body.velocity.x = baseSpeed;
+
             game.physics.arcade.enable(sky);
-            sky.body.immovable = true;
             sky.body.velocity.x = baseSpeed;
+
+            game.physics.arcade.enable(hills);
+            hills.body.velocity.x = baseSpeed;
+
+            game.physics.arcade.enable(mountain);
+            mountain.body.velocity.x = baseSpeed;
 
             groundCollision = game.add.sprite(0, game.height - 64);
             groundCollision.scale.x = game.width;
@@ -124,10 +136,17 @@
 
             cursors = game.input.keyboard.createCursorKeys();
             add_shit();
+
+            // sounds
+            exposionTankSound = game.add.audio('explosion_tank');
+            exposionShitSound = game.add.audio('explosion_shit');
+            tankLaserSound = game.add.audio('laser_tank');
+
+            fireKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         }
 
         function add_shit() {
-            shit = game.add.sprite(500 , ground.y - game.cache.getImage('shit').height ,'shit');
+            shit = game.add.sprite(500 , ground.y - (game.cache.getImage('shit').height - 7) ,'shit');
             shits.add(shit);
             shit.body.immovable = true;
             next_shit = parseInt(Math.random() * 100) + 100;
@@ -135,6 +154,7 @@
 
         function collision (tank_collide, shit_collide) {
             tank.kill();
+            exposionTankSound.play();
         }
 
         function fire() {
@@ -150,11 +170,14 @@
                 bulletY.angle = 90;
                 bulletY.reset(tank.x + tank.width - 90, tank.y);
                 game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
+                tankLaserSound.play();
+
             }
         }
 
         function shitBoom(bullet, shit) {
             shit.kill();
+            exposionShitSound.play();
             bullet.kill();
         }
 
@@ -165,9 +188,11 @@
             if (tank.alive) {
                 ground.tilePosition.x -= dummy.deltaX;
                 sky.tilePosition.x -= dummy.deltaX * 0.1;
+                hills.tilePosition.x -= dummy.deltaX * 0.4;
+                mountain.tilePosition.x -= dummy.deltaX * 0.2;
 
                 // Fire the bullets
-                if (game.input.activePointer.isDown) {
+                if (fireKey.isDown) {
                     fire();
                 }            
             } else {
@@ -178,6 +203,8 @@
 
                 ground.body.velocity.x = 0;
                 sky.body.velocity.x = 0;
+                hills.body.velocity.x = 0;
+                mountain.body.velocity.x = 0;
             }
             
             game.physics.arcade.collide(tank, groundCollision);
