@@ -23,9 +23,8 @@
         var nextFire = 0;
         var bounds;
         var dummy;
-        var boundsLeft;
-        var boundsRight;
         var groundCollision;
+        var fireKey;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -49,12 +48,12 @@
 
         function render() {
             // game.debug.body(tank);
-            game.debug.body(groundCollision);
-            game.debug.body(shits);
-            game.debug.cameraInfo(game.camera, 32, 32);
-            game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
-            game.debug.body(boundsLeft);
-            game.debug.body(boundsRight);
+            // game.debug.body(groundCollision);
+            // game.debug.body(shits);
+            // game.debug.cameraInfo(game.camera, 32, 32);
+            // game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+            // game.debug.body(boundsLeft);
+            // game.debug.body(boundsRight);
         }
 
         function create () {
@@ -128,6 +127,8 @@
             exposionTankSound = game.add.audio('explosion_tank');
             exposionShitSound = game.add.audio('explosion_shit');
             tankLaserSound = game.add.audio('laser_tank');
+
+            fireKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         }
 
         function add_shit() {
@@ -179,7 +180,7 @@
             ground.tilePosition.x -= dummy.deltaX;
 
             // Fire the bullets
-            if (game.input.activePointer.isDown) {
+            if (fireKey.isDown) {
                     fire();
             }            
         } else {
