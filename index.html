@@ -27,12 +27,20 @@
         var boundsRight;
         var groundCollision;
 
+	var ufos;
+	var nextUfo = 0;
+	var firstUfo = true;
+	var ufoBullets;
+	var ufoFireRate = 100;
+	var ufoNextFire = 0;
+
+
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
         function preload () {
             // Asset preloading
             game.load.spritesheet('tank', 'img/tank.png', 160, 76, 2);
-            // game.load.image('ufo','img/ufo.png');
+            game.load.image('ufo','img/ufo.png');
             // game.load.image('ufo2','img/ufo2.png');
             // game.load.image('ufo3','img/ufo3.png');
             game.load.image('bullet', 'img/bullet.png');
@@ -47,8 +55,9 @@
             // game.debug.body(tank);
             game.debug.body(groundCollision);
             game.debug.body(shits);
-            game.debug.cameraInfo(game.camera, 32, 32);
+     //       game.debug.cameraInfo(game.camera, 32, 32);
             game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+            game.debug.body(ufos);
             game.debug.body(boundsLeft);
             game.debug.body(boundsRight);
         }
@@ -90,6 +99,23 @@
             bullets.setAll('checkWorldBounds', true);
             bullets.setAll('outOfBoundsKill', true);
 
+	   // UFOS
+	    ufos = game.add.group();
+	    game.physics.arcade.enable(ufos);
+	    ufos.enableBody = true;
+	    ufos.createMultiple(200, 'ufo');
+	    ufos.setAll('checkWorldBounds', true);
+	    ufos.setAll('outOfBoundKill', true);
+
+	   // UFO Bullets
+	    ufoBullets = game.add.group();
+            game.physics.arcade.enable(ufoBullets);
+            ufoBullets.enableBody = true;
+            ufoBullets.createMultiple(200, 'bullet');
+            ufoBullets.setAll('checkWorldBounds', true);
+            ufoBullets.setAll('outOfBoundsKill', true);
+
+
             // Make the tank collide with the screen borders
             bounds = game.add.group();
             game.physics.arcade.enable(bounds);
@@ -130,8 +156,26 @@
 
         function collision (tank_collide, shit_collide) {
             tank.kill();
-            console.log("Boom");
+	    shit_collide.kill();
         }
+
+	function createUfo() {
+	    var ufo = ufos.getFirstDead();
+	    ufo.reset(tank.x + Math.random()*500, tank.y-300-Math.random()*100);
+	   
+            // UFO to shoot bullets
+	    if(game.time.now > ufoNextFire && ufoBullets.countDead() > 0) {
+                ufoNextFire = game.time.now + ufoFireRate;
+
+                var bullet = ufoBullets.getFirstDead();
+
+                bullet.reset(ufo.x, ufo.y);
+
+                game.physics.arcade.moveToXY(bullet, tank.x+100, tank.y, 300);
+            }
+
+			
+	}
 
         function fire() {
             if (game.time.now > nextFire && bullets.countDead() > 0) {
@@ -148,8 +192,6 @@
                 bulletY.reset(tank.x + tank.width - 18, tank.y+18);
 
                 game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
-
-        //          bullet.x +=10;
             }
         }
 
@@ -157,6 +199,12 @@
             shit.kill();
             bullet.kill();
         }
+
+	function ufoBoom(ufoBullet, ufo) {
+            ufo.kill();
+            ufoBullet.kill();
+        }
+
 
         function update() {
             tank.animations.play('drive',6);
@@ -168,6 +216,17 @@
                 if (game.input.activePointer.isDown) {
                         fire();
                 }            
+		console.log(game.time.now);
+	
+		if(game.time.now > nextUfo) {
+                        nextUfo = game.time.now + Math.random()*8000;
+			if(firstUfo === true) {
+				firstUfo = false;
+			} else {
+				createUfo();
+			}
+                }
+
             } else {
                 for (var i = bounds.length - 1; i >= 0; i--) {
                     bounds.getAt(i).body.velocity.x = 0;
@@ -180,6 +239,10 @@
             game.physics.arcade.collide(tank, bounds);
             game.physics.arcade.collide(tank, shits, collision);
             game.physics.arcade.collide(bullets, shits, shitBoom);
+	    game.physics.arcade.collide(ufoBullets, tank, collision);
+	    game.physics.arcade.collide(bullets, ufos, ufoBoom);
+
+
 
             if (tank.body.touching.down) {
                 tank.body.velocity.x = 100;
