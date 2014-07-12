@@ -33,7 +33,8 @@
         var ufoBullets;
         var ufoFireRate = 100;
         var ufoNextFire = 0;
-
+	var scoreText;
+	var score = 0;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -169,6 +170,11 @@
             tankLaserSound = game.add.audio('laser_tank');
 
             fireKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+	    //  The score
+	    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+
         }
 
         function add_shit() {
@@ -185,6 +191,14 @@
 	    shit_collide.kill();
             exposionTankSound.play();
         }
+
+	function gameOver() {
+	    var gameOver = game.add.text(game.camera.x+160, 260, 'GAME OVER !! Hit spacebar to start again', { fontSize: '42px', fill: '#FF0000' });
+	    if (fireKey.isDown) {
+		score = 0;
+           	create();
+            }   	
+	}
 
 	function createUfo() {
 	    var ufo = ufos.getRandom();
@@ -226,12 +240,21 @@
             shit.kill();
             exposionShitSound.play();
             bullet.kill();
+	    updateScore();
         }
         
         function ufoBoom(ufoBullet, ufo) {
             ufo.kill();
+            exposionShitSound.play();
             ufoBullet.kill();
+	    updateScore();
         }
+
+	function updateScore() {
+	    score += 10;
+            scoreText.text = 'Score: ' + score;
+
+	}
 
         function update() {
             tank.animations.play('drive',6);
@@ -240,6 +263,8 @@
             add_shit();
 
             if (tank.alive) {
+
+		scoreText.x = game.camera.x + 16;
                 ground.tilePosition.x -= dummy.deltaX;
                 sky.tilePosition.x -= dummy.deltaX * 0.1;
                 hills.tilePosition.x -= dummy.deltaX * 0.4;
@@ -269,6 +294,7 @@
                 sky.body.velocity.x = 0;
                 hills.body.velocity.x = 0;
                 mountain.body.velocity.x = 0;
+		gameOver();
             }
             
             game.physics.arcade.collide(tank, groundCollision);
@@ -276,7 +302,7 @@
             game.physics.arcade.collide(tank, shits, collision);
             game.physics.arcade.collide(bullets, shits, shitBoom);
     	    game.physics.arcade.collide(ufoBullets, tank, collision);
-	        game.physics.arcade.collide(bullets, ufos, ufoBoom);
+	    game.physics.arcade.collide(bullets, ufos, ufoBoom);
 
 
 
