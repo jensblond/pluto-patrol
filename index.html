@@ -16,6 +16,9 @@
         var ground;
         var shits;
         var total = 0;
+	var bullets;
+	var fireRate = 100;
+	var nextFire = 0;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -25,7 +28,7 @@
             // game.load.image('ufo','img/ufo.png');
             // game.load.image('ufo2','img/ufo2.png');
             // game.load.image('ufo3','img/ufo3.png');
-            // game.load.image('bullet', 'img/bullet.png');
+            game.load.image('bullet', 'img/bullet.png');
             // game.load.image('pittfall', 'img/pittfall.png');
             // game.load.image('sky', 'img/sky.png');
             // game.load.image('mountain', 'img/mountain.png');
@@ -34,10 +37,13 @@
         }
 
         function render() {
-            game.debug.body(tank);
-            game.debug.body(ground);
-            game.debug.body(shits);
-            game.debug.cameraInfo(game.camera, 32, 32);
+//            game.debug.body(tank);
+//            game.debug.body(ground);
+//            game.debug.body(shits);
+ //           game.debug.cameraInfo(game.camera, 32, 32);
+		game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+   // game.debug.spriteInfo(sprite, 32, 450);
+
         }
 
         function create () {
@@ -71,8 +77,14 @@
             shits = game.add.group();
             game.physics.arcade.enable(shits);
             shits.enableBody = true;
-
-            
+	
+	    // Bullets
+	    bullets = game.add.group();
+	    game.physics.arcade.enable(bullets);
+            bullets.enableBody = true;
+	    bullets.createMultiple(200, 'bullet');
+    	    bullets.setAll('checkWorldBounds', true);
+    	    bullets.setAll('outOfBoundsKill', true);
             // shits.scale.y = 0.25;
             // shits.scale.x = 0.25;
 
@@ -90,8 +102,33 @@
 
         function collision (tank_collide, shit_collide) {
             console.log("Boom");
-            tank.kill();
+//            tank.kill();
         }
+
+	function fire() {
+		if (game.time.now > nextFire && bullets.countDead() > 0) {
+        		nextFire = game.time.now + fireRate;
+
+        		var bulletX = bullets.getFirstDead();
+
+        		bulletX.reset(tank.x + tank.width - 18, tank.y+48);
+
+        		game.physics.arcade.moveToXY(bulletX, tank.x+game.width, bulletX.y, 600, 500);
+
+			var bulletY = bullets.getFirstDead();
+
+                        bulletY.reset(tank.x + tank.width - 18, tank.y+18);
+
+                        game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
+
+//			bullet.x +=10;
+    		}	
+	}
+
+	function shitBoom(bullet, shit) {
+		shit.kill();
+		bullet.kill();
+	}
 
         function update() {
             // if () {
@@ -101,10 +138,17 @@
                 game.camera.x += 1;
                 ground.tilePosition.x -= 1;
                 ground.x += 1;
+
+		// Fire the bullets
+		if (game.input.activePointer.isDown) {
+        		fire();
+    		}
+
             }
             
             game.physics.arcade.collide(tank, ground);
             game.physics.arcade.collide(tank, shits, collision);
+	    game.physics.arcade.collide(bullets, shits, shitBoom);
 
             if ( tank.body.touching.down ) {
                 tank.body.velocity.x = 1;    
