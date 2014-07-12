@@ -41,6 +41,10 @@
             // game.load.image('mountain', 'img/mountain.png');
             game.load.image('shit', 'img/shit.png');
             game.load.image('ground', 'img/ground.png');
+
+            game.load.audio('explosion_tank', 'sounds/explosion0.wav');
+            game.load.audio('explosion_shit', 'sounds/explosion1.wav');
+            game.load.audio('laser_tank', 'sounds/laser.wav');
         }
 
         function render() {
@@ -119,6 +123,11 @@
 
             cursors = game.input.keyboard.createCursorKeys();
             add_shit();
+
+            // sounds
+            exposionTankSound = game.add.audio('explosion_tank');
+            exposionShitSound = game.add.audio('explosion_shit');
+            tankLaserSound = game.add.audio('laser_tank');
         }
 
         function add_shit() {
@@ -130,6 +139,7 @@
 
         function collision (tank_collide, shit_collide) {
             tank.kill();
+            exposionTankSound.play();
             console.log("Boom");
         }
 
@@ -149,12 +159,15 @@
 
                 game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
 
+                tankLaserSound.play();
+
         //          bullet.x +=10;
             }
         }
 
         function shitBoom(bullet, shit) {
             shit.kill();
+            exposionShitSound.play();
             bullet.kill();
         }
 
