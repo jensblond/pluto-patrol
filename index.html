@@ -41,10 +41,10 @@
             // Asset preloading
             game.load.spritesheet('tank', 'img/tank.png', 160, 76, 2);
             game.load.image('ufo','img/ufo.png');
-            // game.load.image('ufo2','img/ufo2.png');
+            game.load.image('ufo2','img/ufo2.png');
             // game.load.image('ufo3','img/ufo3.png');
             game.load.image('bullet', 'img/bullet.png');
-            // game.load.image('pittfall', 'img/pittfall.png');
+            game.load.image('pitfall', 'img/pitfall.png');
             game.load.image('sky', 'img/sky.png');
             game.load.image('mountain', 'img/mountain.png');
             game.load.image('hills', 'img/hills.png');
@@ -115,16 +115,17 @@
             bullets.setAll('checkWorldBounds', true);
             bullets.setAll('outOfBoundsKill', true);
 
-	   // UFOS
-	    ufos = game.add.group();
-	    game.physics.arcade.enable(ufos);
-	    ufos.enableBody = true;
-	    ufos.createMultiple(200, 'ufo');
-	    ufos.setAll('checkWorldBounds', true);
-	    ufos.setAll('outOfBoundKill', true);
+    	   // UFOS
+    	    ufos = game.add.group();
+    	    game.physics.arcade.enable(ufos);
+    	    ufos.enableBody = true;
+            ufos.createMultiple(15, 'ufo');
+    	    ufos.createMultiple(15, 'ufo2');
+    	    ufos.setAll('checkWorldBounds', true);
+    	    ufos.setAll('outOfBoundKill', true);
 
-	   // UFO Bullets
-	    ufoBullets = game.add.group();
+    	   // UFO Bullets
+    	    ufoBullets = game.add.group();
             game.physics.arcade.enable(ufoBullets);
             ufoBullets.enableBody = true;
             ufoBullets.createMultiple(200, 'bullet');
@@ -186,7 +187,7 @@
         }
 
 	function createUfo() {
-	    var ufo = ufos.getFirstDead();
+	    var ufo = ufos.getRandom();
 	    ufo.reset(tank.x + Math.random()*500, tank.y-300-Math.random()*100);
 	   
             // UFO to shoot bullets
