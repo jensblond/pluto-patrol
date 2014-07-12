@@ -119,44 +119,40 @@
 		bullet.kill();
 	}
 
-        function update() {
-            tank.animations.play('drive',6);
+    function update() {
+        tank.animations.play('drive',6);
 
-            if (tank.alive) {
-                game.camera.x += 1;
-                ground.tilePosition.x -= 1;
-                ground.x += 1;
+        if (tank.alive) {
+            game.camera.x += 1;
+            ground.tilePosition.x -= 1;
+            ground.x += 1;
 
-		// Fire the bullets
-		if (game.input.activePointer.isDown) {
-        		fire();
-    		}
+	        // Fire the bullets
+            if (game.input.activePointer.isDown) {
+    		  fire();
+            }
+        }
+        
+        game.physics.arcade.collide(tank, ground);
+        game.physics.arcade.collide(tank, shits, collision);
+        game.physics.arcade.collide(bullets, shits, shitBoom);
 
-            }
-            
-            game.physics.arcade.collide(tank, ground);
-            game.physics.arcade.collide(tank, shits, collision);
-	    game.physics.arcade.collide(bullets, shits, shitBoom);
-
-            if ( tank.body.touching.down ) {
-                tank.body.velocity.x = 1;    
-            }
-            
-            if (cursors.left.isDown && tank.body.touching.down) {
-                tank.body.velocity.x = -150;
-                tank.animations.play('left');
-            } else if (cursors.right.isDown && tank.body.touching.down) {
-                tank.body.velocity.x = 150;
-                tank.animations.play('right');
-            } else {
-                tank.animations.stop();
-                tank.frame = 1;
-            }
-            
-            //  Allow the tank to jump if they are touching the ground.
-            if (cursors.up.isDown && tank.body.touching.down) {
-                tank.body.velocity.y = -270;
-            }
+        if ( tank.body.touching.down ) {
+            tank.body.velocity.x = 1;    
+        }
+        if (cursors.left.isDown && tank.body.touching.down) {
+            tank.body.velocity.x = -150;
+        } else if (cursors.right.isDown && tank.body.touching.down) {
+            tank.body.velocity.x = 150;
+        } else {
+            tank.animations.stop();
+            tank.frame = 1;
+        }
+        
+        //  Allow the tank to jump if they are touching the ground.
+        if (cursors.up.isDown && tank.body.touching.down) {
+            tank.body.velocity.y = -270;
+        }
         }
 
     };
