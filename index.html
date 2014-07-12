@@ -14,12 +14,18 @@
         var cursors;
         var tank;
         var ground;
+        var baseSpeed = 100;
         var shits;
         var anim;
         var total = 0;
-	var bullets;
-	var fireRate = 100;
-	var nextFire = 0;
+        var bullets;
+        var fireRate = 100;
+        var nextFire = 0;
+        var bounds;
+        var dummy;
+        var boundsLeft;
+        var boundsRight;
+        var groundCollision;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -39,35 +45,34 @@
 
         function render() {
             // game.debug.body(tank);
-            // game.debug.body(ground);
-            // game.debug.body(shits);
-            // game.debug.cameraInfo(game.camera, 32, 32);
-            // game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
-            // game.debug.spriteInfo(sprite, 32, 450);
-
+            game.debug.body(groundCollision);
+            game.debug.body(shits);
+            game.debug.cameraInfo(game.camera, 32, 32);
+            game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+            game.debug.body(boundsLeft);
+            game.debug.body(boundsRight);
         }
 
         function create () {
             game.physics.startSystem(Phaser.Physics.ARCADE);
             game.world.setBounds(0, 0, 20000, game.height);
-            // game.add.sprite(0, 0, 'ground');
-            // grounds = game.add.group();
-            // grounds.enableBody = true;
 
             ground = game.add.tileSprite(0, game.height - 64, game.stage.bounds.width, game.cache.getImage('ground').height, 'ground');
-            ground.enableBody = true;
-            // var  ground = grounds.create(0, game.height - 64, 'ground');
-            // ground.body.immovable = true;
-            
+
             tank = game.add.sprite(10, ground.y - (ground.height + 100), 'tank', 0);
             tank.animations.add('drive');
             
+            game.physics.arcade.enable(ground);
+            ground.body.immovable = true;
+            ground.body.velocity.x = baseSpeed;
+
+            groundCollision = game.add.sprite(0, game.height - 64);
+            groundCollision.scale.x = game.width;
+            game.physics.arcade.enable(groundCollision);
+            groundCollision.body.immovable = true;
 
             game.physics.arcade.enable(tank);
-            game.physics.arcade.enable(ground);
 
-            ground.body.immovable = true;
-            
             tank.body.bounce.y = 0.2;
             tank.body.gravity.y = 300;
             tank.body.collideWorldBounds = true;
@@ -76,14 +81,42 @@
             shits = game.add.group();
             game.physics.arcade.enable(shits);
             shits.enableBody = true;
-	
-    	    // Bullets
-    	    bullets = game.add.group();
-    	    game.physics.arcade.enable(bullets);
+    
+            // Bullets
+            bullets = game.add.group();
+            game.physics.arcade.enable(bullets);
             bullets.enableBody = true;
-    	    bullets.createMultiple(200, 'bullet');
-    	    bullets.setAll('checkWorldBounds', true);
-    	    bullets.setAll('outOfBoundsKill', true);
+            bullets.createMultiple(200, 'bullet');
+            bullets.setAll('checkWorldBounds', true);
+            bullets.setAll('outOfBoundsKill', true);
+
+            // Make the tank collide with the screen borders
+            bounds = game.add.group();
+            game.physics.arcade.enable(bounds);
+
+            boundsLeft = game.add.sprite(0, 0);
+            boundsLeft.x = -boundsLeft.width;
+            boundsLeft.scale.y = game.height;
+            game.physics.arcade.enable(boundsLeft);
+            boundsLeft.body.velocity.x = baseSpeed
+            boundsLeft.body.immovable = true;
+
+            boundsRight = game.add.sprite(game.width/2, 0);
+            boundsRight.scale.y = game.height;
+            game.physics.arcade.enable(boundsRight);
+            boundsRight.body.velocity.x = baseSpeed
+            boundsRight.body.immovable = true;
+
+            bounds.add(boundsRight);
+            bounds.add(boundsLeft);
+            bounds.enableBody = true;
+
+            // The camera will follow this dummy object
+            dummy = game.add.sprite(game.width/2, game.height/2);
+            game.physics.arcade.enable(dummy);
+            dummy.body.velocity.x = baseSpeed;
+            game.camera.follow(dummy);
+
             cursors = game.input.keyboard.createCursorKeys();
             add_shit();
         }
@@ -100,60 +133,73 @@
             console.log("Boom");
         }
 
-	function fire() {
-		if (game.time.now > nextFire && bullets.countDead() > 0) {
-       		nextFire = game.time.now + fireRate;
+        function fire() {
+            if (game.time.now > nextFire && bullets.countDead() > 0) {
+                nextFire = game.time.now + fireRate;
 
-    		var bulletX = bullets.getFirstDead();
-    		bulletX.reset(tank.x + tank.width - 18, tank.y+48);
+                var bulletX = bullets.getFirstDead();
 
-    		game.physics.arcade.moveToXY(bulletX, tank.x+game.width, bulletX.y, 600, 500);
-			var bulletY = bullets.getFirstDead();
-            bulletY.reset(tank.x + tank.width - 18, tank.y+18);
-            game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
-   		}	
-	}
+                bulletX.reset(tank.x + tank.width - 18, tank.y+48);
 
-	function shitBoom(bullet, shit) {
-		shit.kill();
-		bullet.kill();
-	}
+                game.physics.arcade.moveToXY(bulletX, tank.x+game.width, bulletX.y, 600, 500);
+
+                var bulletY = bullets.getFirstDead();
+
+                bulletY.reset(tank.x + tank.width - 18, tank.y+18);
+
+                game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
+
+        //          bullet.x +=10;
+            }
+        }
+
+        function shitBoom(bullet, shit) {
+            shit.kill();
+            bullet.kill();
+        }
 
     function update() {
         tank.animations.play('drive',6);
 
-        if (tank.alive) {
-            game.camera.x += 1;
-            ground.tilePosition.x -= 1;
-            ground.x += 1;
 
-	        // Fire the bullets
+        if (tank.alive) {
+            ground.tilePosition.x -= dummy.deltaX;
+
+            // Fire the bullets
             if (game.input.activePointer.isDown) {
-    		  fire();
+                    fire();
+            }            
+        } else {
+            for (var i = bounds.length - 1; i >= 0; i--) {
+                bounds.getAt(i).body.velocity.x = 0;
             }
+            dummy.body.velocity.x = 0;
+            ground.body.velocity.x = 0;
         }
         
-        game.physics.arcade.collide(tank, ground);
+        game.physics.arcade.collide(tank, groundCollision);
+        game.physics.arcade.collide(tank, bounds);
         game.physics.arcade.collide(tank, shits, collision);
         game.physics.arcade.collide(bullets, shits, shitBoom);
 
-        if ( tank.body.touching.down ) {
-            tank.body.velocity.x = 1;    
+        if (tank.body.touching.down) {
+            tank.body.velocity.x = 100;
         }
+
+        if (cursors.right.isDown && tank.body.touching.down) {
+            tank.body.velocity.x += 100;
+        }
+
         if (cursors.left.isDown && tank.body.touching.down) {
-            tank.body.velocity.x = -150;
-        } else if (cursors.right.isDown && tank.body.touching.down) {
-            tank.body.velocity.x = 150;
-        } else {
+            tank.body.velocity.x -= 100;
             tank.animations.stop();
-            tank.frame = 1;
         }
-        
+
         //  Allow the tank to jump if they are touching the ground.
         if (cursors.up.isDown && tank.body.touching.down) {
             tank.body.velocity.y = -270;
         }
-        }
+    }
 
     };
 
