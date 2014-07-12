@@ -26,6 +26,7 @@
         var boundsLeft;
         var boundsRight;
         var groundCollision;
+        var sky;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -37,7 +38,7 @@
             // game.load.image('ufo3','img/ufo3.png');
             game.load.image('bullet', 'img/bullet.png');
             // game.load.image('pittfall', 'img/pittfall.png');
-            // game.load.image('sky', 'img/sky.png');
+            game.load.image('sky', 'img/sky.png');
             // game.load.image('mountain', 'img/mountain.png');
             game.load.image('shit', 'img/shit.png');
             game.load.image('ground', 'img/ground.png');
@@ -45,18 +46,19 @@
 
         function render() {
             // game.debug.body(tank);
-            game.debug.body(groundCollision);
-            game.debug.body(shits);
-            game.debug.cameraInfo(game.camera, 32, 32);
-            game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
-            game.debug.body(boundsLeft);
-            game.debug.body(boundsRight);
+            // game.debug.body(groundCollision);
+            // game.debug.body(shits);
+            // game.debug.cameraInfo(game.camera, 32, 32);
+            // game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+            // game.debug.body(boundsLeft);
+            // game.debug.body(boundsRight);
         }
 
         function create () {
             game.physics.startSystem(Phaser.Physics.ARCADE);
             game.world.setBounds(0, 0, 20000, game.height);
 
+            sky = game.add.tileSprite(0, 0, game.stage.bounds.width, 600, 'sky');
             ground = game.add.tileSprite(0, game.height - 64, game.stage.bounds.width, game.cache.getImage('ground').height, 'ground');
 
             tank = game.add.sprite(10, ground.y - (ground.height + 100), 'tank', 0);
@@ -65,6 +67,9 @@
             game.physics.arcade.enable(ground);
             ground.body.immovable = true;
             ground.body.velocity.x = baseSpeed;
+            game.physics.arcade.enable(sky);
+            sky.body.immovable = true;
+            sky.body.velocity.x = baseSpeed;
 
             groundCollision = game.add.sprite(0, game.height - 64);
             groundCollision.scale.x = game.width;
@@ -130,7 +135,6 @@
 
         function collision (tank_collide, shit_collide) {
             tank.kill();
-            console.log("Boom");
         }
 
         function fire() {
@@ -138,18 +142,14 @@
                 nextFire = game.time.now + fireRate;
 
                 var bulletX = bullets.getFirstDead();
-
-                bulletX.reset(tank.x + tank.width - 18, tank.y+48);
-
+                bulletX.angle = 0;
+                bulletX.reset(tank.x + tank.width - 10, tank.y+35);
                 game.physics.arcade.moveToXY(bulletX, tank.x+game.width, bulletX.y, 600, 500);
 
                 var bulletY = bullets.getFirstDead();
-
-                bulletY.reset(tank.x + tank.width - 18, tank.y+18);
-
+                bulletY.angle = 90;
+                bulletY.reset(tank.x + tank.width - 90, tank.y);
                 game.physics.arcade.moveToXY(bulletY, bulletY.x, 0, 600, 500);
-
-        //          bullet.x +=10;
             }
         }
 
@@ -158,48 +158,51 @@
             bullet.kill();
         }
 
-    function update() {
-        tank.animations.play('drive',6);
+        function update() {
+            tank.animations.play('drive',6);
+            // sky.x = dummy.body.x / 1.1;
 
+            if (tank.alive) {
+                ground.tilePosition.x -= dummy.deltaX;
+                sky.tilePosition.x -= dummy.deltaX * 0.1;
 
-        if (tank.alive) {
-            ground.tilePosition.x -= dummy.deltaX;
-
-            // Fire the bullets
-            if (game.input.activePointer.isDown) {
+                // Fire the bullets
+                if (game.input.activePointer.isDown) {
                     fire();
-            }            
-        } else {
-            for (var i = bounds.length - 1; i >= 0; i--) {
-                bounds.getAt(i).body.velocity.x = 0;
+                }            
+            } else {
+                for (var i = bounds.length - 1; i >= 0; i--) {
+                    bounds.getAt(i).body.velocity.x = 0;
+                }
+                dummy.body.velocity.x = 0;
+
+                ground.body.velocity.x = 0;
+                sky.body.velocity.x = 0;
             }
-            dummy.body.velocity.x = 0;
-            ground.body.velocity.x = 0;
-        }
-        
-        game.physics.arcade.collide(tank, groundCollision);
-        game.physics.arcade.collide(tank, bounds);
-        game.physics.arcade.collide(tank, shits, collision);
-        game.physics.arcade.collide(bullets, shits, shitBoom);
+            
+            game.physics.arcade.collide(tank, groundCollision);
+            game.physics.arcade.collide(tank, bounds);
+            game.physics.arcade.collide(tank, shits, collision);
+            game.physics.arcade.collide(bullets, shits, shitBoom);
 
-        if (tank.body.touching.down) {
-            tank.body.velocity.x = 100;
-        }
+            if (tank.body.touching.down) {
+                tank.body.velocity.x = 100;
+            }
 
-        if (cursors.right.isDown && tank.body.touching.down) {
-            tank.body.velocity.x += 100;
-        }
+            if (cursors.right.isDown && tank.body.touching.down) {
+                tank.body.velocity.x += 100;
+            }
 
-        if (cursors.left.isDown && tank.body.touching.down) {
-            tank.body.velocity.x -= 100;
-            tank.animations.stop();
-        }
+            if (cursors.left.isDown && tank.body.touching.down) {
+                tank.body.velocity.x -= 100;
+                tank.animations.stop();
+            }
 
-        //  Allow the tank to jump if they are touching the ground.
-        if (cursors.up.isDown && tank.body.touching.down) {
-            tank.body.velocity.y = -270;
+            //  Allow the tank to jump if they are touching the ground.
+            if (cursors.up.isDown && tank.body.touching.down) {
+                tank.body.velocity.y = -270;
+            }
         }
-    }
 
     };
 
