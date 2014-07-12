@@ -19,12 +19,13 @@
         var anim;
         var total = 0;
         var bullets;
-        var fireRate = 100;
+        var fireRate = 500;
         var nextFire = 0;
         var bounds;
         var dummy;
         var groundCollision;
         var fireKey;
+        var nextShit;
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
@@ -104,7 +105,7 @@
             boundsLeft.body.velocity.x = baseSpeed
             boundsLeft.body.immovable = true;
 
-            boundsRight = game.add.sprite(game.width/2, 0);
+            boundsRight = game.add.sprite(game.width/1.5, 0);
             boundsRight.scale.y = game.height;
             game.physics.arcade.enable(boundsRight);
             boundsRight.body.velocity.x = baseSpeed
@@ -132,10 +133,12 @@
         }
 
         function add_shit() {
-            shit = game.add.sprite(500 , ground.y - game.cache.getImage('shit').height ,'shit');
-            shits.add(shit);
-            shit.body.immovable = true;
-            next_shit = parseInt(Math.random() * 100) + 100;
+            if (game.time.now >= nextShit || nextShit == null) {
+                shit = game.add.sprite(tank.body.x + game.width, ground.y - game.cache.getImage('shit').height ,'shit');
+                shits.add(shit);
+                shit.body.immovable = true;
+                nextShit = game.time.now + Math.random() * 1500 + 3000;
+            }
         }
 
         function collision (tank_collide, shit_collide) {
@@ -175,6 +178,7 @@
     function update() {
         tank.animations.play('drive',6);
 
+        add_shit();
 
         if (tank.alive) {
             ground.tilePosition.x -= dummy.deltaX;
