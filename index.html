@@ -173,7 +173,7 @@
 
         function add_shit() {
             if (game.time.now >= nextShit || nextShit == null) {
-                shit = game.add.sprite(tank.body.x + game.width, ground.y - game.cache.getImage('shit').height ,'shit');
+                shit = game.add.sprite(game.camera.x + game.width, ground.y - game.cache.getImage('shit').height ,'shit');
                 shits.add(shit);
                 shit.body.immovable = true;
                 nextShit = game.time.now + Math.random() * 1500 + 3000;
@@ -236,6 +236,8 @@
         function update() {
             tank.animations.play('drive',6);
             // sky.x = dummy.body.x / 1.1;
+
+            add_shit();
 
             if (tank.alive) {
                 ground.tilePosition.x -= dummy.deltaX;
